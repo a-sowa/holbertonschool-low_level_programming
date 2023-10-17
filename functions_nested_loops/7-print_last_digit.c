@@ -1,10 +1,10 @@
 #include "main.h"
 
 /**
- * _abs - Entry point
- * _abs func: return absolute value of input number
+ * print_last_digit - Entry point
+ * print_last_digit func: return last digit of entered number
  * @n: input number
- * Return: abolute value (Success)
+ * Return: last digit (Success)
  */
 
 int print_last_digit(int n)
