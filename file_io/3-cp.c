@@ -10,29 +10,45 @@
 
 int main(int argc, char *argv[])
 {
-	mode_t permissions = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH;
-	int fd_from = open(argv[1], O_RDONLY);
-	int fd_to = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, permissions);
-	int rd_count, wr_count;
+	int fd_from, fd_to, rd_count, wr_count;
 	char buffer[1024];
 
-	if (argc != 3 || fd_from == -1 || fd_to == -1)
+	if (argc != 3)
 	{
-		dprintf(2, argc != 3 ? "Usage: cp file_from file_to\n" :
-								"Error: Can't read from file %s\n", argc != 3 ? argv[0] : argv[1]);
-		return (argc != 3 ? 97 : 98);
+		dprintf(STDERR_FILENO, "Usage: cp file_from file_to\n");
+		exit(97);
 	}
-
+	fd_from = open(argv[1], O_RDONLY);
+	if (fd_from == -1)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", argv[1]);
+		exit(98);
+	}
+	fd_to = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0664);
+	if (fd_to == -1)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't write to %s\n", argv[2]);
+		exit(99);
+	}
 	do {
 		rd_count = read(fd_from, buffer, 1024);
+		if (rd_count == -1)
+		{
+			dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", argv[1]);
+			exit(98);
+		}
 		wr_count = write(fd_to, buffer, rd_count);
-	} while (rd_count > 0 && wr_count == rd_count);
-
+		if (wr_count == -1)
+		{
+			dprintf(STDERR_FILENO, "Error: Can't write to %s\n", argv[2]);
+			exit(99);
+		}
+	} while (rd_count > 0);
 	if (close(fd_from) == -1 || close(fd_to) == -1)
 	{
-		dprintf(2, "Error: Can't close fd\n");
-		return (100);
+		dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", (close(fd_from) == -1)
+		? fd_from : fd_to);
+		exit(100);
 	}
-
-	return (wr_count == -1 ? 99 : 0);
+	return (0);
 }
