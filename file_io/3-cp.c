@@ -10,7 +10,7 @@
 
 int main(int argc, char *argv[])
 {
-	int fd_from, fd_to, rd_count, wr_count;
+	int fd_from, fd_to, rd_count;
 	char buffer[1024];
 
 	if (argc != 3)
@@ -30,24 +30,23 @@ int main(int argc, char *argv[])
 		dprintf(STDERR_FILENO, "Error: Can't write to %s\n", argv[2]);
 		exit(99);
 	}
-	do {
-		rd_count = read(fd_from, buffer, 1024);
-		if (rd_count == -1)
-		{
-			dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", argv[1]);
-			exit(98);
-		}
-		wr_count = write(fd_to, buffer, rd_count);
-		if (wr_count == -1)
+	while ((rd_count = read(fd_from, buffer, 1024)) > 0)
+	{
+		if ((write(fd_to, buffer, rd_count) != rd_count) || (fd_to == -1))
 		{
 			dprintf(STDERR_FILENO, "Error: Can't write to %s\n", argv[2]);
 			exit(99);
 		}
-	} while (rd_count > 0);
+	}
+	if (rd_count == -1)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", argv[1]);
+		exit(98);
+	}
 	if (close(fd_from) == -1 || close(fd_to) == -1)
 	{
-		dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", (close(fd_from) == -1)
-		? fd_from : fd_to);
+		dprintf(STDERR_FILENO, "Error: Can't close fd %d\n",
+		(close(fd_from) == -1) ? fd_from : fd_to);
 		exit(100);
 	}
 	return (0);
